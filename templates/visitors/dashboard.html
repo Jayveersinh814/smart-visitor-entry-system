@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Dashboard</h3>
+<div class="row g-3 mb-3">
+  <div class="col"><div class="card"><div class="card-body">Today Registrations: <b>{{ total_today }}</b></div></div></div>
+  <div class="col"><div class="card"><div class="card-body">Currently Inside: <b>{{ inside_count }}</b></div></div></div>
+  <div class="col"><div class="card"><div class="card-body">Pending Approvals: <b>{{ pending_count }}</b></div></div></div>
+</div>
+<h5>Recent Passes</h5>
+<table class="table table-sm table-bordered">
+  <tr><th>ID</th><th>Visitor</th><th>Host</th><th>Status</th><th>Valid Until</th></tr>
+  {% for p in recent_passes %}
+  <tr>
+    <td><a href="{% url 'pass_detail' p.id %}">{{ p.id }}</a></td>
+    <td>{{ p.visitor_name }}</td>
+    <td>{{ p.host.username }}</td>
+    <td>{{ p.status }}</td>
+    <td>{{ p.valid_until }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

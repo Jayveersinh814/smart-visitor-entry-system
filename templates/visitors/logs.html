@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Visitor Logs</h3>
+<a href="{% url 'export_logs_csv' %}" class="btn btn-outline-secondary btn-sm mb-2">Export CSV</a>
+<table class="table table-sm table-bordered">
+  <tr><th>ID</th><th>Visitor</th><th>Host</th><th>Type</th><th>Status</th><th>Check-In</th><th>Check-Out</th></tr>
+  {% for p in passes %}
+  <tr>
+    <td>{{ p.id }}</td>
+    <td>{{ p.visitor_name }}</td>
+    <td>{{ p.host.username }}</td>
+    <td>{{ p.visitor_type }}</td>
+    <td>{{ p.status }}</td>
+    <td>{{ p.check_in_at|default:"-" }}</td>
+    <td>{{ p.check_out_at|default:"-" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

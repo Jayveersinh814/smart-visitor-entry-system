@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Visitor pass</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.5; color: #222;">
+  <p>Hello <strong>{{ pass.visitor_name }}</strong>,</p>
+  <p>Your visit request has been <strong>approved</strong>. Please find your details below.</p>
+  <table cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+    <tr><td><strong>Pass ID</strong></td><td>#{{ pass.id }}</td></tr>
+    <tr><td><strong>Host</strong></td><td>{{ host_name }}</td></tr>
+    <tr><td><strong>Valid from</strong></td><td>{{ pass.valid_from }}</td></tr>
+    <tr><td><strong>Valid until</strong></td><td>{{ pass.valid_until }}</td></tr>
+    <tr><td><strong>Purpose</strong></td><td>{{ pass.purpose }}</td></tr>
+    {% if pass.reference_by %}
+    <tr><td><strong>Reference</strong></td><td>{{ pass.reference_by }}</td></tr>
+    {% endif %}
+  </table>
+  <p>The <strong>QR code</strong> is attached to this email as <code>visitor_pass_qr.png</code>. Show it at the gate for check-in.</p>
+  <p style="color:#666;font-size:12px;">If you did not expect this email, please ignore it.</p>
+</body>
+</html>

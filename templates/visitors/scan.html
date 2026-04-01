@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Gate QR Scan</h3>
+{% if result %}
+  <div class="alert {% if result.status == 'ok' %}alert-success{% else %}alert-danger{% endif %}">
+    {{ result.message }}
+    {% if result.watch_alert %}<b> Watchlist Alert!</b>{% endif %}
+  </div>
+{% endif %}
+<form method="post" class="card card-body">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button class="btn btn-primary">Validate</button>
+</form>
+<p class="mt-3 text-muted">Tip: Integrate camera scanner JS library (html5-qrcode) to fill QR token automatically.</p>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Pass #{{ pass.id }}</h3>
+<div class="card card-body mb-3">
+  <p><b>Visitor:</b> {{ pass.visitor_name }} ({{ pass.phone_number }})</p>
+  <p><b>Host:</b> {{ pass.host.username }}</p>
+  <p><b>Status:</b> {{ pass.status }}</p>
+  <p><b>Reference:</b> {{ pass.reference_by|default:"-" }}</p>
+  <p><b>Window:</b> {{ pass.valid_from }} to {{ pass.valid_until }}</p>
+  {% if pass.qr_image %}
+    <img src="{{ pass.qr_image.url }}" width="220" alt="QR code">
+    <div class="mt-2">
+      <a class="btn btn-outline-primary btn-sm" href="{{ pass.qr_image.url }}" download>Download QR</a>
+    </div>
+  {% else %}
+    <p class="text-warning">QR not generated yet. Approve pass first.</p>
+  {% endif %}
+</div>
+{% if pass.status == 'pending' %}
+<a class="btn btn-success" href="{% url 'review_pass' pass.id %}">Review</a>
+{% endif %}
+{% endblock %}
