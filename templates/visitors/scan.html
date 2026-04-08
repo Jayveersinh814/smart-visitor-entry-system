@@ -1,16 +1,611 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Gate QR Scan</h3>
-{% if result %}
-  <div class="alert {% if result.status == 'ok' %}alert-success{% else %}alert-danger{% endif %}">
-    {{ result.message }}
-    {% if result.watch_alert %}<b> Watchlist Alert!</b>{% endif %}
+<style>
+  :root {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border-color: #e2e8f0;
+    --accent-primary: #6366f1;
+    --accent-secondary: #8b5cf6;
+    --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --success-color: #10b981;
+    --success-bg: #d1fae5;
+    --success-border: #6ee7b7;
+    --danger-color: #ef4444;
+    --danger-bg: #fee2e2;
+    --danger-border: #fca5a5;
+    --warning-color: #f59e0b;
+    --warning-bg: #fef3c7;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+
+  html[data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --border-color: #334155;
+    --success-bg: #064e3b;
+    --success-border: #10b981;
+    --danger-bg: #7f1d1d;
+    --danger-border: #ef4444;
+    --warning-bg: #78350f;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+    --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes scanLine {
+    0% {
+      top: 0;
+    }
+    50% {
+      top: calc(100% - 4px);
+    }
+    100% {
+      top: 0;
+    }
+  }
+
+  @keyframes borderGlow {
+    0%, 100% {
+      box-shadow: 0 0 5px var(--accent-primary), inset 0 0 5px transparent;
+    }
+    50% {
+      box-shadow: 0 0 20px var(--accent-primary), inset 0 0 10px rgba(99, 102, 241, 0.1);
+    }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+  }
+
+  @keyframes successPop {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .gate-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  /* Header */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    animation: slideDown 0.5s ease-out;
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--accent-gradient);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+  }
+
+  .header-icon svg {
+    width: 28px;
+    height: 28px;
+    color: white;
+  }
+
+  .header-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+  }
+
+  .header-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+  }
+
+  /* Theme Toggle */
+  .theme-toggle {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
+    background: var(--bg-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--accent-primary);
+    transform: rotate(15deg);
+  }
+
+  .theme-toggle svg {
+    width: 22px;
+    height: 22px;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+  }
+
+  .sun-icon, .moon-icon {
+    display: none;
+  }
+
+  html[data-theme="light"] .sun-icon {
+    display: block;
+  }
+
+  html[data-theme="dark"] .moon-icon {
+    display: block;
+  }
+
+  /* Result Alert */
+  .result-alert {
+    padding: 1.25rem 1.5rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    animation: successPop 0.5s ease-out;
+  }
+
+  .result-alert.success {
+    background: var(--success-bg);
+    border: 2px solid var(--success-border);
+  }
+
+  .result-alert.danger {
+    background: var(--danger-bg);
+    border: 2px solid var(--danger-border);
+    animation: shake 0.5s ease-out;
+  }
+
+  .alert-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .result-alert.success .alert-icon {
+    background: var(--success-color);
+  }
+
+  .result-alert.danger .alert-icon {
+    background: var(--danger-color);
+  }
+
+  .alert-icon svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+  }
+
+  .alert-content {
+    flex: 1;
+  }
+
+  .alert-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .alert-message {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .watchlist-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: var(--danger-color);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 8px;
+    animation: pulse 1s infinite;
+  }
+
+  .watchlist-badge svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Scanner Card */
+  .scanner-card {
+    background: var(--bg-secondary);
+    border-radius: 24px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out 0.1s backwards;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .scanner-card:hover {
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  .scanner-header {
+    padding: 1.5rem 2rem;
+    background: var(--accent-gradient);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scanner-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .scanner-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .scanner-title svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* QR Scanner Visual */
+  .scanner-visual {
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .qr-frame {
+    width: 180px;
+    height: 180px;
+    position: relative;
+    border-radius: 20px;
+    animation: borderGlow 2s infinite;
+  }
+
+  .qr-corner {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 4px solid var(--accent-primary);
+  }
+
+  .qr-corner.tl {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+    border-top-left-radius: 12px;
+  }
+
+  .qr-corner.tr {
+    top: 0;
+    right: 0;
+    border-left: none;
+    border-bottom: none;
+    border-top-right-radius: 12px;
+  }
+
+  .qr-corner.bl {
+    bottom: 0;
+    left: 0;
+    border-right: none;
+    border-top: none;
+    border-bottom-left-radius: 12px;
+  }
+
+  .qr-corner.br {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
+    border-bottom-right-radius: 12px;
+  }
+
+  .scan-line {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--accent-primary), var(--accent-secondary), var(--accent-primary), transparent);
+    border-radius: 2px;
+    animation: scanLine 2.5s ease-in-out infinite;
+    box-shadow: 0 0 10px var(--accent-primary);
+  }
+
+  .qr-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-muted);
+  }
+
+  .qr-placeholder svg {
+    width: 60px;
+    height: 60px;
+    opacity: 0.3;
+  }
+
+  /* Form */
+  .scanner-form {
+    padding: 0 2rem 2rem;
+  }
+
+  .scanner-form p {
+    margin-bottom: 1.25rem;
+  }
+
+  .scanner-form label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+  }
+
+  .scanner-form input[type="text"],
+  .scanner-form input[type="number"],
+  .scanner-form select,
+  .scanner-form textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.05em;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+  }
+
+  .scanner-form input:focus,
+  .scanner-form select:focus,
+  .scanner-form textarea:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+    background: var(--bg-secondary);
+  }
+
+  .scanner-form input::placeholder {
+    color: var(--text-muted);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .validate-btn {
+    width: 100%;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: var(--accent-gradient);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  .validate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+  }
+
+  .validate-btn:active {
+    transform: translateY(0);
+  }
+
+  .validate-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .gate-container {
+      padding: 1rem;
+    }
+
+    .header-title {
+      font-size: 1.5rem;
+    }
+
+    .scanner-visual {
+      padding: 1.5rem;
+    }
+
+    .qr-frame {
+      width: 150px;
+      height: 150px;
+    }
+
+    .scanner-form {
+      padding: 0 1.5rem 1.5rem;
+    }
+  }
+</style>
+
+<div class="gate-container">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="header-title">Gate QR Scan</h3>
+        <p class="header-subtitle">Validate visitor passes at entry point</p>
+      </div>
+    </div>
+  </header>
+
+  {% if result %}
+  <div class="result-alert {% if result.status == 'ok' %}success{% else %}danger{% endif %}">
+    <div class="alert-icon">
+      {% if result.status == 'ok' %}
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+      {% else %}
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+      {% endif %}
+    </div>
+    <div class="alert-content">
+      <p class="alert-title">{% if result.status == 'ok' %}Access Granted{% else %}Access Denied{% endif %}</p>
+      <p class="alert-message">{{ result.message }}</p>
+      {% if result.watch_alert %}
+      <div class="watchlist-badge">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        Watchlist Alert!
+      </div>
+      {% endif %}
+    </div>
   </div>
-{% endif %}
-<form method="post" class="card card-body">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="btn btn-primary">Validate</button>
-</form>
-<p class="mt-3 text-muted">Tip: Integrate camera scanner JS library (html5-qrcode) to fill QR token automatically.</p>
+  {% endif %}
+
+  <div class="scanner-card">
+    <div class="scanner-header">
+      <div class="scanner-title">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        Enter or Scan QR Code
+      </div>
+    </div>
+
+    <div class="scanner-visual">
+      <div class="qr-frame">
+        <div class="qr-corner tl"></div>
+        <div class="qr-corner tr"></div>
+        <div class="qr-corner bl"></div>
+        <div class="qr-corner br"></div>
+        <div class="scan-line"></div>
+        <div class="qr-placeholder">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <form method="post" class="scanner-form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="validate-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+        Validate
+      </button>
+    </form>
+  </div>
+
+
+</div>
+
 {% endblock %}

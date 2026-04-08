@@ -1,23 +1,466 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login - GatePass QR</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Login – GatePass QR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #eef0f7;
+    --surface:   #ffffff;
+    --border:    #dde1ef;
+    --border-fo: #a5a8f3;
+    --text:      #1c1e2e;
+    --muted:     #7b7f9e;
+    --label:     #9295b0;
+    --accent:    #5b5ef5;
+    --accent2:   #9b5ef5;
+    --input-bg:  #f4f5fb;       /* softer lavender-tinted bg */
+    --input-txt: #3a3d5c;       /* medium-dark, not full black */
+    --glow:      rgba(91,94,245,0.10);
+    --shadow:    0 2px 32px rgba(91,94,245,0.08), 0 1px 4px rgba(0,0,0,0.04);
+    --radius:    14px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* dot grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: radial-gradient(#c9cde8 1px, transparent 1px);
+    background-size: 22px 22px;
+    opacity: 0.55;
+  }
+
+  /* ambient orbs */
+  body::after {
+    content: '';
+    position: fixed;
+    width: 420px; height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(91,94,245,0.10), transparent 70%);
+    top: -100px; left: -100px;
+    z-index: 0; pointer-events: none;
+  }
+  .orb2 {
+    position: fixed;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(155,94,245,0.08), transparent 70%);
+    bottom: -80px; right: -80px;
+    z-index: 0; pointer-events: none;
+  }
+
+  /* ── wrapper ── */
+  .wrap {
+    position: relative; z-index: 2;
+    width: 100%; max-width: 400px;
+    animation: rise 0.65s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes rise {
+    from { opacity:0; transform:translateY(22px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  /* ── brand ── */
+  .brand { text-align: center; margin-bottom: 1.75rem; }
+
+  .icon-ring {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 66px; height: 66px;
+    border-radius: 18px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 20px rgba(91,94,245,0.11);
+    cursor: default;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s;
+    position: relative;
+  }
+  .icon-ring:hover {
+    transform: scale(1.09) rotate(6deg);
+    box-shadow: 0 8px 30px rgba(91,94,245,0.20);
+  }
+
+  /* QR + scan */
+  .qr-wrap {
+    position: relative;
+    width: 36px; height: 36px;
+  }
+  .scan-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, #5b5ef5, #9b5ef5, #5b5ef5, transparent);
+    border-radius: 1px;
+    top: 0;
+    animation: scan 2.2s ease-in-out infinite;
+    box-shadow: 0 0 7px rgba(91,94,245,0.55);
+  }
+  @keyframes scan {
+    0%   { top:2px;  opacity:0; }
+    8%   { opacity:1; }
+    92%  { opacity:1; }
+    100% { top:34px; opacity:0; }
+  }
+  .corner { position:absolute; width:8px; height:8px; border-color:#5b5ef5; border-style:solid; }
+  .c-tl { top:0;    left:0;   border-width:2px 0 0 2px; border-radius:1px 0 0 0; }
+  .c-tr { top:0;    right:0;  border-width:2px 2px 0 0; border-radius:0 1px 0 0; }
+  .c-bl { bottom:0; left:0;   border-width:0 0 2px 2px; border-radius:0 0 0 1px; }
+  .c-br { bottom:0; right:0;  border-width:0 2px 2px 0; border-radius:0 0 1px 0; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 12px;
+    background: #edeefe;
+    border: 1px solid #c5c7f6;
+    border-radius: 20px;
+    font-size: 10.5px; font-weight: 600;
+    color: #4547b8;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .pill-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #5b5ef5;
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+
+  .brand h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.6rem; font-weight: 700;
+    color: #1c1e2e; letter-spacing: -0.03em;
+    margin-bottom: 4px;
+  }
+  .brand p { font-size: 13.5px; color: var(--muted); }
+
+  /* ── card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.85rem;
+    box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+    animation: rise 0.65s 0.1s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .card::before {
+    content: '';
+    position: absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, #5b5ef5, #9b5ef5, #ec4899);
+    border-radius: 20px 20px 0 0;
+  }
+  /* mouse-glow */
+  .card::after {
+    content: '';
+    position: absolute; inset:0; pointer-events:none;
+    background: radial-gradient(400px circle at var(--mx,50%) var(--my,50%), rgba(91,94,245,0.04), transparent 50%);
+    opacity:0; transition: opacity 0.3s;
+  }
+  .card:hover::after { opacity:1; }
+
+  /* ── field ── */
+  .field { margin-bottom: 1.1rem; }
+  .lbl {
+    display: block;
+    font-size: 10.5px; font-weight: 600;
+    color: var(--label);
+    letter-spacing: 0.07em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .iw { position: relative; }
+  .iw svg.ico {
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: #b8bbce;           /* very light icon default */
+    pointer-events: none;
+    transition: color 0.2s;
+  }
+  .iw:focus-within svg.ico { color: var(--accent); }
+
+  /* ── THE INPUT – softer style ── */
+  .iw input {
+    width: 100%;
+    height: 46px;
+    padding: 0 40px 0 38px;
+    font-size: 13.5px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    /* soft slate-tinted background, NOT sharp white */
+    background: #f0f1f9;
+    /* medium-soft text color */
+    color: #4a4e72;
+    border: 1.5px solid #dde1ef;
+    border-radius: 10px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s, color 0.2s;
+    -webkit-appearance: none;
+  }
+  .iw input::placeholder {
+    color: #b0b4cc;   /* very soft placeholder */
+    font-weight: 400;
+  }
+  .iw input:hover {
+    border-color: #c5c7f0;
+    background: #edeffe;
+  }
+  .iw input:focus {
+    border-color: var(--border-fo);
+    box-shadow: 0 0 0 3px var(--glow);
+    background: #eef0fd;
+    color: #2d3058;   /* slightly deeper when typing */
+  }
+
+  /* pw toggle */
+  .pw-btn {
+    position: absolute; right: 10px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    padding: 5px; color: #b0b4cc;
+    display: flex; align-items: center;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .pw-btn:hover { color: var(--accent); background: rgba(91,94,245,0.07); }
+
+  /* ── meta ── */
+  .meta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.3rem; font-size: 13px;
+  }
+  .remember {
+    display: flex; align-items: center; gap: 7px;
+    color: var(--muted); cursor: pointer;
+  }
+  .remember input[type=checkbox] {
+    width:14px; height:14px; accent-color: var(--accent); cursor:pointer;
+  }
+  .forgot {
+    color: var(--accent); text-decoration: none;
+    font-weight: 500; font-size: 13px;
+    transition: color 0.2s;
+  }
+  .forgot:hover { color: var(--accent2); }
+
+  /* ── button ── */
+  .btn {
+    width: 100%; height: 48px; border: none; border-radius: 11px;
+    background: linear-gradient(135deg, #5b5ef5 0%, #9b5ef5 100%);
+    color: #fff; font-size: 14.5px; font-weight: 600;
+    font-family: 'Sora', sans-serif;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    box-shadow: 0 4px 18px rgba(91,94,245,0.30);
+    letter-spacing: 0.02em;
+  }
+  .btn::after {
+    content:'';
+    position:absolute; top:-50%; left:-80%;
+    width:45%; height:200%;
+    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent);
+    transform:skewX(-18deg); transition:left 0.5s;
+  }
+  .btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(91,94,245,0.38); }
+  .btn:hover::after { left:140%; }
+  .btn:active { transform:translateY(0) scale(0.98); opacity:0.88; }
+
+  /* ── footer badges ── */
+  .badges {
+    display: flex; align-items: center; justify-content: center; gap: 18px;
+    margin-top: 1.4rem;
+  }
+  .badge {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600; color: #adb0c8;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    cursor: default; transition: color 0.2s;
+  }
+  .badge:hover { color: var(--accent); }
+  .badge-icon {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: #f0f1f9; border: 1px solid #dde1ef;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .badge:hover .badge-icon {
+    background: #edeffe; border-color: #c5c7f6; transform:translateY(-2px);
+  }
+
+  .foot {
+    text-align: center; margin-top: 1.2rem;
+    font-size: 12.5px; color: #adb0c8;
+  }
+  .foot a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  .foot a:hover { text-decoration: underline; }
+</style>
 </head>
-<body class="bg-light">
-<div class="container mt-5" style="max-width:420px;">
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h4 class="mb-3">Login</h4>
-      <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button class="btn btn-primary w-100" type="submit">Sign in</button>
-      </form>
+<body>
+<div class="orb2"></div>
+
+<div class="wrap">
+  <!-- brand -->
+  <div class="brand">
+    <div class="icon-ring">
+      <div class="qr-wrap">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+          stroke="#5b5ef5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <path d="M14 14h2v2h-2zM18 14h3M14 18h2M18 18h3M14 21v-2M21 18v3"/>
+        </svg>
+        <div class="scan-line"></div>
+        <div class="corner c-tl"></div>
+        <div class="corner c-tr"></div>
+        <div class="corner c-bl"></div>
+        <div class="corner c-br"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="pill"><div class="pill-dot"></div> System Online</div>
+    </div>
+    <h1>GatePass QR</h1>
+    <p>Sign in to manage your access passes</p>
+  </div>
+
+  <!-- card -->
+  <div class="card" id="loginCard">
+    <form method="post" action="{% url 'login' %}" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div style="margin-bottom:10px; color:#b42318; font-size:13px;">
+          {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+        </div>
+      {% endif %}
+
+    <!-- username -->
+    <div class="field">
+      <label class="lbl" for="id_username">Username</label>
+      <div class="iw">
+        <svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <input id="id_username" name="username" type="text" placeholder="your username" autocomplete="username" value="{{ form.username.value|default:'' }}"/>
+      </div>
+    </div>
+
+    <!-- password -->
+    <div class="field">
+      <label class="lbl" for="id_password">Password</label>
+      <div class="iw">
+        <svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <input id="id_password" name="password" type="password" placeholder="••••••••" autocomplete="current-password"/>
+        <button class="pw-btn" type="button" id="pwToggle" aria-label="Toggle password visibility">
+          <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- meta -->
+    <div class="meta">
+      <label class="remember">
+        <input type="checkbox" name="remember"/> Remember me
+      </label>
+      <a href="#" class="forgot">Forgot password?</a>
+    </div>
+
+    <!-- submit -->
+    <button class="btn" type="submit">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+        <polyline points="10 17 15 12 10 7"/>
+        <line x1="15" y1="12" x2="3" y2="12"/>
+      </svg>
+      Sign in
+    </button>
+    {% if next %}
+      <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+    </form>
+  </div>
+
+  <!-- badges -->
+  <div class="badges">
+    <div class="badge">
+      <div class="badge-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5b5ef5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      Secured
+    </div>
+    <div class="badge">
+      <div class="badge-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5b5ef5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      Encrypted
+    </div>
+    <div class="badge">
+      <div class="badge-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5b5ef5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      24/7
     </div>
   </div>
+
+  <div class="foot">Don't have access? <a href="#">Request a pass</a></div>
 </div>
+
+<script>
+  /* password toggle */
+  var pw = document.getElementById('id_password');
+  var toggle = document.getElementById('pwToggle');
+  var icon = document.getElementById('eyeIcon');
+  var openEye = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  var closedEye = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  toggle.addEventListener('click', function(){
+    var show = pw.type === 'password';
+    pw.type = show ? 'text' : 'password';
+    icon.innerHTML = show ? closedEye : openEye;
+  });
+
+  /* card mouse glow */
+  var card = document.getElementById('loginCard');
+  card.addEventListener('mousemove', function(e){
+    var r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+    card.style.setProperty('--my', ((e.clientY - r.top)  / r.height * 100) + '%');
+  });
+</script>
 </body>
 </html>

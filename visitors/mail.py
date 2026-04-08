@@ -19,9 +19,14 @@ def send_visitor_pass_email(visitor_pass):
     try:
         host_name = visitor_pass.host.get_full_name() or visitor_pass.host.username
         subject = f"Your visitor pass – GatePass QR (Pass #{visitor_pass.id})"
+        qr_image_url = None
+        if visitor_pass.qr_image:
+            # qr_image.url is typically "/media/qr_codes/....png"
+            qr_image_url = f"{settings.SITE_URL}{visitor_pass.qr_image.url}"
         context = {
             "pass": visitor_pass,
             "host_name": host_name,
+            "qr_image_url": qr_image_url,
         }
         html_body = render_to_string("emails/visitor_pass_approved.html", context)
         plain_body = (
@@ -32,6 +37,7 @@ def send_visitor_pass_email(visitor_pass):
             f"Valid until: {visitor_pass.valid_until}\n"
             f"Purpose: {visitor_pass.purpose}\n\n"
             f"Your QR code is attached (visitor_pass_qr.png). Show it at the gate for entry.\n"
+            + (f"Or download it here: {qr_image_url}\n" if qr_image_url else "")
         )
         msg = EmailMultiAlternatives(
             subject=subject,

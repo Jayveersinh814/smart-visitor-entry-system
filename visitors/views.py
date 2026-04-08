@@ -13,6 +13,11 @@ from .utils import create_qr_token, generate_qr_image, refresh_expired_passes, v
 
 
 @login_required
+def landing(request):
+    return render(request, "visitors/landing.html")
+
+
+@login_required
 def dashboard(request):
     refresh_expired_passes()
     passes = VisitorPass.objects.select_related("host", "check_in_gate")

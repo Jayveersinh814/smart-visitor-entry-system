@@ -1,19 +1,753 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Visitor Logs</h3>
-<a href="{% url 'export_logs_csv' %}" class="btn btn-outline-secondary btn-sm mb-2">Export CSV</a>
-<table class="table table-sm table-bordered">
-  <tr><th>ID</th><th>Visitor</th><th>Host</th><th>Type</th><th>Status</th><th>Check-In</th><th>Check-Out</th></tr>
-  {% for p in passes %}
-  <tr>
-    <td>{{ p.id }}</td>
-    <td>{{ p.visitor_name }}</td>
-    <td>{{ p.host.username }}</td>
-    <td>{{ p.visitor_type }}</td>
-    <td>{{ p.status }}</td>
-    <td>{{ p.check_in_at|default:"-" }}</td>
-    <td>{{ p.check_out_at|default:"-" }}</td>
-  </tr>
-  {% endfor %}
-</table>
+<style>
+  /* CSS Variables for Theming */
+  :root {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --accent-primary: #6366f1;
+    --accent-primary-light: #818cf8;
+    --accent-secondary: #06b6d4;
+    --status-approved: #10b981;
+    --status-approved-bg: #d1fae5;
+    --status-pending: #f59e0b;
+    --status-pending-bg: #fef3c7;
+    --status-expired: #ef4444;
+    --status-expired-bg: #fee2e2;
+    --status-inside: #3b82f6;
+    --status-inside-bg: #dbeafe;
+    --type-guest: #8b5cf6;
+    --type-guest-bg: #ede9fe;
+    --type-contractor: #f97316;
+    --type-contractor-bg: #ffedd5;
+    --type-vendor: #06b6d4;
+    --type-vendor-bg: #cffafe;
+    --type-interview: #ec4899;
+    --type-interview-bg: #fce7f3;
+  }
+
+  html[data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --border-color: #334155;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    --status-approved-bg: #064e3b;
+    --status-pending-bg: #78350f;
+    --status-expired-bg: #7f1d1d;
+    --status-inside-bg: #1e3a5f;
+    --type-guest-bg: #4c1d95;
+    --type-contractor-bg: #7c2d12;
+    --type-vendor-bg: #164e63;
+    --type-interview-bg: #831843;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .s-container {
+    min-height: 100vh;
+    background: var(--bg-primary);
+    padding: 2rem;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Header Section */
+  .s-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    animation: slideDown 0.5s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+  }
+
+  .header-icon svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+  }
+
+  .header-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+  }
+
+  .header-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  /* Export Button */
+  .export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .export-btn:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .export-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Theme Toggle */
+  .theme-toggle {
+    position: relative;
+    width: 60px;
+    height: 32px;
+    background: var(--bg-tertiary);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+  }
+
+  .theme-toggle:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  html[data-theme="dark"] .toggle-thumb {
+    left: 31px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  }
+
+  .toggle-thumb svg {
+    width: 14px;
+    height: 14px;
+    color: white;
+  }
+
+  /* Table Card */
+  .table-card {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Table Styles */
+  .s-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .s-table thead {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  }
+
+  .s-table th {
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: white;
+  }
+
+  .s-table th:first-child {
+    padding-left: 1.5rem;
+  }
+
+  .s-table th:last-child {
+    padding-right: 1.5rem;
+  }
+
+  .s-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+    animation: rowSlideIn 0.4s ease-out backwards;
+  }
+
+  .s-table tbody tr:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+
+  .s-table tbody tr:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+
+  .s-table tbody tr:nth-child(3) {
+    animation-delay: 0.15s;
+  }
+
+  .s-table tbody tr:nth-child(4) {
+    animation-delay: 0.2s;
+  }
+
+  .s-table tbody tr:nth-child(5) {
+    animation-delay: 0.25s;
+  }
+
+  .s-table tbody tr:nth-child(6) {
+    animation-delay: 0.3s;
+  }
+
+  .s-table tbody tr:nth-child(7) {
+    animation-delay: 0.35s;
+  }
+
+  .s-table tbody tr:nth-child(8) {
+    animation-delay: 0.4s;
+  }
+
+  .s-table tbody tr:nth-child(9) {
+    animation-delay: 0.45s;
+  }
+
+  .s-table tbody tr:nth-child(10) {
+    animation-delay: 0.5s;
+  }
+
+  @keyframes rowSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .s-table tbody tr:hover {
+    background: var(--bg-tertiary);
+  }
+
+  .s-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .s-table td {
+    padding: 1rem 1.25rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+  }
+
+  .s-table td:first-child {
+    padding-left: 1.5rem;
+  }
+
+  .s-table td:last-child {
+    padding-right: 1.5rem;
+  }
+
+  /* ID Badge */
+  .id-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    font-size: 0.813rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    font-family: 'Monaco', 'Menlo', monospace;
+  }
+
+  /* Visitor Cell */
+  .visitor-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .visitor-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .visitor-avatar svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+  }
+
+  .visitor-avatar.male {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  }
+
+  .visitor-avatar.female {
+    background: linear-gradient(135deg, #ec4899, #db2777);
+  }
+
+  .visitor-name {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  /* Host Cell */
+  .host-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+  }
+
+  .host-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--text-muted);
+  }
+
+  /* Type Badge */
+  .type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+
+  .type-badge.guest {
+    background: var(--type-guest-bg);
+    color: var(--type-guest);
+  }
+
+  .type-badge.contractor {
+    background: var(--type-contractor-bg);
+    color: var(--type-contractor);
+  }
+
+  .type-badge.vendor {
+    background: var(--type-vendor-bg);
+    color: var(--type-vendor);
+  }
+
+  .type-badge.interview {
+    background: var(--type-interview-bg);
+    color: var(--type-interview);
+  }
+
+  .type-badge.default {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+  }
+
+  .type-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Status Badge */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+
+  .status-badge.approved {
+    background: var(--status-approved-bg);
+    color: var(--status-approved);
+  }
+
+  .status-badge.pending {
+    background: var(--status-pending-bg);
+    color: var(--status-pending);
+  }
+
+  .status-badge.expired {
+    background: var(--status-expired-bg);
+    color: var(--status-expired);
+  }
+
+  .status-badge.inside,
+  .status-badge.checked_in {
+    background: var(--status-inside-bg);
+    color: var(--status-inside);
+  }
+
+  .status-badge.checked_out {
+    background: var(--status-approved-bg);
+    color: var(--status-approved);
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* Time Cell */
+  .time-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .time-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+  }
+
+  .time-value {
+    color: var(--text-secondary);
+    font-size: 0.813rem;
+  }
+
+  .time-value.checkin {
+    color: var(--status-inside);
+  }
+
+  .time-value.checkout {
+    color: var(--status-approved);
+  }
+
+  .time-empty {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+  }
+
+  .empty-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    color: var(--text-muted);
+    opacity: 0.5;
+  }
+
+  .empty-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-description {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .s-container {
+      padding: 1rem;
+    }
+
+    .s-header {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .header-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .table-card {
+      overflow-x: auto;
+    }
+
+    .s-table {
+      min-width: 900px;
+    }
+  }
+</style>
+
+<div class="s-container">
+  <!-- Header -->
+  <div class="s-header">
+    <div class="header-left">
+      <div class="header-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="header-title">Visitor Logs</h3>
+        <p class="header-subtitle">Complete history of all visitor passes</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="{% url 'export_logs_csv' %}" class="export-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Export CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="table-card">
+    <table class="s-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Visitor</th>
+          <th>Host</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Check-In</th>
+          <th>Check-Out</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in passes %}
+        <tr>
+          <td>
+            <span class="id-badge">#{{ p.id }}</span>
+          </td>
+          <td>
+            <div class="visitor-cell">
+              <div class="visitor-avatar {% cycle 'male' 'female' %}">
+                {% cycle 'male' 'female' as gender silent %}
+                {% if gender == 'male' %}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+                {% else %}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+                {% endif %}
+              </div>
+              <span class="visitor-name">{{ p.visitor_name }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="host-cell">
+              <svg class="host-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              {{ p.host.username }}
+            </div>
+          </td>
+          <td>
+            <span
+              class="type-badge {% if p.visitor_type == 'guest' %}guest{% elif p.visitor_type == 'contractor' %}contractor{% elif p.visitor_type == 'vendor' %}vendor{% elif p.visitor_type == 'interview' %}interview{% else %}default{% endif %}">
+              {% if p.visitor_type == 'guest' %}
+              <svg class="type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {% elif p.visitor_type == 'contractor' %}
+              <svg class="type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {% elif p.visitor_type == 'vendor' %}
+              <svg class="type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              {% elif p.visitor_type == 'interview' %}
+              <svg class="type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {% else %}
+              <svg class="type-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              {% endif %}
+              {{ p.visitor_type }}
+            </span>
+          </td>
+          <td>
+            <span
+              class="status-badge {% if p.status == 'approved' %}approved{% elif p.status == 'pending' %}pending{% elif p.status == 'expired' %}expired{% elif p.status == 'inside' or p.status == 'checked_in' %}inside{% elif p.status == 'checked_out' %}checked_out{% else %}pending{% endif %}">
+              <span class="status-dot"></span>
+              {{ p.status }}
+            </span>
+          </td>
+          <td>
+            <div class="time-cell">
+              {% if p.check_in_at %}
+              <svg class="time-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              <span class="time-value checkin">{{ p.check_in_at }}</span>
+              {% else %}
+              <span class="time-empty">-</span>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <div class="time-cell">
+              {% if p.check_out_at %}
+              <svg class="time-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span class="time-value checkout">{{ p.check_out_at }}</span>
+              {% else %}
+              <span class="time-empty">-</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p class="empty-title">No Visitor Logs</p>
+              <p class="empty-description">Visitor activity will appear here once passes are created.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 {% endblock %}

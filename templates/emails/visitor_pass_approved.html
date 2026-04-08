@@ -17,7 +17,16 @@
     <tr><td><strong>Reference</strong></td><td>{{ pass.reference_by }}</td></tr>
     {% endif %}
   </table>
-  <p>The <strong>QR code</strong> is attached to this email as <code>visitor_pass_qr.png</code>. Show it at the gate for check-in.</p>
+  <p>
+    The <strong>QR code</strong> is attached to this email as <code>visitor_pass_qr.png</code>.
+    Show it at the gate for check-in.
+  </p>
+  {% if qr_image_url %}
+    <p>
+      Or download/open it here:
+      <a href="{{ qr_image_url }}">{{ qr_image_url }}</a>
+    </p>
+  {% endif %}
   <p style="color:#666;font-size:12px;">If you did not expect this email, please ignore it.</p>
 </body>
 </html>

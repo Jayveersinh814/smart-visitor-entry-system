@@ -1,0 +1,118 @@
+/* Global app theme tweaks (light only). */
+
+.app-bg {
+  background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 50%, #e0f2fe 100%);
+  min-height: 100vh;
+  color: #0f172a;
+  font-family: "Inter", sans-serif;
+}
+
+.app-main,
+.app-navbar,
+.app-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.app-navbar {
+  background: linear-gradient(90deg, #071527 0%, #0b2b55 100%);
+  border-bottom: none;
+  backdrop-filter: none;
+}
+
+.app-navbar .navbar-brand {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #ffffff !important;
+}
+
+.app-logo {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.app-main {
+  padding-bottom: 24px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+}
+
+p, small, li, td, th, label, input, textarea, select {
+  font-family: "Inter", sans-serif;
+  font-weight: 400;
+}
+
+.app-footer {
+  padding: 22px 0 26px;
+}
+
+.app-footer small {
+  font-family: "Inter", sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.auth-card {
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.card {
+  border: 0;
+}
+
+.card:hover {
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08) !important;
+}
+
+.table thead th {
+  background: rgba(0, 0, 0, 0.04);
+  font-weight: 700;
+}
+
+.alert {
+  border-radius: 14px;
+}
+
+/* Navbar palette */
+.app-navbar .nav-link {
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+  color: #D1D5DB !important;
+}
+
+.app-navbar .nav-link:hover {
+  color: #60A5FA !important;
+}
+
+.app-navbar .nav-link.active {
+  color: #60A5FA !important;
+  font-weight: 600;
+}
+
+/* Django auth login uses the default form widgets (no Bootstrap classes).
+   This keeps the login inputs visually consistent. */
+#loginForm input,
+#loginForm textarea,
+#loginForm select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.5rem;
+}
+
+/* Make checkbox spacing a bit nicer with `form.as_p`. */
+input.form-check-input {
+  margin-left: 0.5rem;
+}
+

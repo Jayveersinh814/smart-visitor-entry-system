@@ -1,0 +1,934 @@
+{% extends "base.html" %}
+{% block title %}Home - GatePass QR{% endblock %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #f5f6ff;
+  --surface: #eef0fb;
+  --card: rgba(255, 255, 255, 0.82);
+  --border: rgba(110, 100, 220, 0.15);
+  --border-hover: rgba(110, 100, 220, 0.38);
+  --accent-v: #6d28d9;
+  --accent-b: #2563eb;
+  --accent-c: #0891b2;
+  --accent-g: #059669;
+  --text-hi: #1a1440;
+  --text-mid: #4b4880;
+  --text-lo: #8e8cb8;
+  --glow-v: rgba(109, 40, 217, 0.15);
+  --glow-b: rgba(37, 99, 235, 0.12);
+  --glow-c: rgba(8, 145, 178, 0.15);
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+}
+
+body { background: var(--ink); color: var(--text-mid); font-family: var(--font-body); }
+
+/* ── CANVAS BACKGROUND ── */
+#bg-canvas {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+}
+
+/* ── GRID OVERLAY ── */
+.grid-overlay {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(100,80,220,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100,80,220,.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+}
+
+/* ── MAIN WRAPPER ── */
+.gp-wrap {
+  position: relative; z-index: 1;
+  max-width: 1180px; margin: 0 auto; padding: 0 1.5rem;
+}
+
+/* ══════════════════════
+   HERO
+══════════════════════ */
+.hero {
+  min-height: 92vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 5rem 1rem 3rem;
+  position: relative;
+}
+
+/* floating badge */
+.hero-badge {
+  display: inline-flex; align-items: center; gap: .45rem;
+  border: 1px solid rgba(109,40,217,.25);
+  background: rgba(109,40,217,.08);
+  color: #6d28d9;
+  font-family: var(--font-body); font-size: .78rem; font-weight: 500; letter-spacing: .06em;
+  padding: .35rem .9rem; border-radius: 100px;
+  margin-bottom: 1.8rem;
+  animation: badgePop .7s var(--ease-spring) .1s both;
+  backdrop-filter: blur(8px);
+}
+.hero-badge-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #6d28d9;
+  box-shadow: 0 0 8px rgba(109,40,217,.5);
+  animation: pulse 2s ease infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.75)} }
+
+/* headline */
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  font-weight: 800;
+  line-height: .95;
+  letter-spacing: -.03em;
+  color: var(--text-hi);
+  animation: heroSlide .9s var(--ease-out) .2s both;
+  position: relative;
+}
+.hero h1 .word-gate { color: var(--text-hi); }
+.hero h1 .word-pass {
+  background: linear-gradient(135deg, #6d28d9, #8b5cf6);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero h1 .word-qr {
+  background: linear-gradient(135deg, #0891b2, #2563eb);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+.hero-sub {
+  font-family: var(--font-body); font-weight: 300; font-size: clamp(.95rem, 1.8vw, 1.15rem);
+  color: var(--text-mid); max-width: 620px; margin: 1.4rem auto 2.5rem;
+  line-height: 1.7; opacity: .85;
+  animation: heroSlide .9s var(--ease-out) .35s both;
+}
+
+/* hero stats strip */
+.hero-stats {
+  display: flex; gap: 2.5rem; justify-content: center; flex-wrap: wrap;
+  margin-bottom: 2.8rem;
+  animation: heroSlide .9s var(--ease-out) .45s both;
+}
+.stat-item { text-align: center; }
+.stat-num {
+  font-family: var(--font-display); font-size: 2rem; font-weight: 800;
+  background: linear-gradient(135deg, #6d28d9, #2563eb);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  line-height: 1;
+}
+.stat-label { font-size: .75rem; letter-spacing: .08em; color: var(--text-lo); margin-top: .2rem; text-transform: uppercase; }
+
+/* CTA buttons */
+.hero-actions {
+  display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+  animation: heroSlide .9s var(--ease-out) .55s both;
+}
+.btn-primary {
+  font-family: var(--font-display); font-weight: 700; font-size: .95rem;
+  padding: .8rem 2.1rem; border-radius: 14px; border: none; cursor: pointer;
+  text-decoration: none; display: inline-flex; align-items: center; gap: .5rem;
+  background: linear-gradient(135deg, #6d28d9, #4f46e5);
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(109,40,217,.35), 0 2px 8px rgba(0,0,0,.1);
+  transition: transform .25s var(--ease-spring), box-shadow .25s ease, filter .2s ease;
+  position: relative; overflow: hidden;
+}
+.btn-primary::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.2), transparent);
+  opacity: 0; transition: opacity .2s ease;
+}
+.btn-primary:hover { transform: translateY(-4px) scale(1.03); filter: brightness(1.08); box-shadow: 0 14px 36px rgba(109,40,217,.4), 0 4px 12px rgba(0,0,0,.12); }
+.btn-primary:hover::before { opacity: 1; }
+
+.btn-ghost {
+  font-family: var(--font-display); font-weight: 600; font-size: .95rem;
+  padding: .8rem 2.1rem; border-radius: 14px; cursor: pointer;
+  text-decoration: none; display: inline-flex; align-items: center; gap: .5rem;
+  background: rgba(255,255,255,.7);
+  border: 1.5px solid rgba(109,40,217,.25);
+  color: var(--text-hi);
+  backdrop-filter: blur(10px);
+  transition: transform .25s var(--ease-spring), border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.btn-ghost:hover { transform: translateY(-4px) scale(1.03); border-color: rgba(109,40,217,.5); background: rgba(255,255,255,.95); box-shadow: 0 8px 24px rgba(109,40,217,.15); }
+
+/* scroll hint */
+.scroll-hint {
+  position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: .35rem;
+  color: var(--text-lo); font-size: .72rem; letter-spacing: .1em;
+  animation: fadeIn 1.5s ease 1.5s both;
+}
+.scroll-arrow {
+  width: 20px; height: 30px; border: 1.5px solid rgba(109,40,217,.25); border-radius: 10px;
+  display: flex; justify-content: center; padding-top: 5px;
+}
+.scroll-dot {
+  width: 4px; height: 4px; border-radius: 50%; background: #6d28d9;
+  animation: scrollDot 2s ease infinite;
+}
+@keyframes scrollDot { 0%{transform:translateY(0);opacity:1} 100%{transform:translateY(12px);opacity:0} }
+
+/* ══════════════════════
+   ABOUT / DETAIL SECTION
+══════════════════════ */
+.about-section { padding: 5rem 0 3rem; }
+
+.section-eyebrow {
+  font-family: var(--font-body); font-size: .72rem; font-weight: 500;
+  letter-spacing: .14em; text-transform: uppercase; color: #7c3aed;
+  text-align: center; margin-bottom: .7rem;
+}
+.section-title {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(1.9rem, 4vw, 3rem); letter-spacing: -.025em;
+  color: var(--text-hi); text-align: center; margin-bottom: .6rem; line-height: 1.1;
+}
+.section-sub {
+  font-family: var(--font-body); text-align: center; color: var(--text-mid);
+  max-width: 560px; margin: 0 auto 3rem; font-size: .97rem; line-height: 1.65;
+}
+
+/* about bento grid */
+.about-bento {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 1rem;
+}
+.bento-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1.6rem;
+  position: relative; overflow: hidden;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 2px 16px rgba(100,80,200,.07), 0 1px 4px rgba(0,0,0,.04);
+  transition: transform .3s var(--ease-spring), border-color .3s ease, box-shadow .3s ease;
+}
+.bento-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(109,40,217,.35), transparent);
+  opacity: 0; transition: opacity .3s ease;
+}
+.bento-card:hover { transform: translateY(-6px); border-color: var(--border-hover); box-shadow: 0 18px 48px rgba(80,60,200,.13), 0 4px 16px rgba(0,0,0,.06); }
+.bento-card:hover::before { opacity: 1; }
+
+.bento-span2 { grid-column: span 2; }
+.bento-span3 { grid-column: span 3; }
+
+.bento-icon {
+  width: 44px; height: 44px; border-radius: 12px; margin-bottom: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+}
+.ic-v { background: linear-gradient(135deg, rgba(109,40,217,.12), rgba(79,70,229,.12)); color: #6d28d9; border: 1px solid rgba(109,40,217,.2); }
+.ic-b { background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(8,145,178,.12)); color: #2563eb; border: 1px solid rgba(37,99,235,.2); }
+.ic-g { background: linear-gradient(135deg, rgba(5,150,105,.12), rgba(8,145,178,.12)); color: #059669; border: 1px solid rgba(5,150,105,.2); }
+.ic-o { background: linear-gradient(135deg, rgba(217,119,6,.12), rgba(234,88,12,.12)); color: #d97706; border: 1px solid rgba(217,119,6,.2); }
+.ic-p { background: linear-gradient(135deg, rgba(219,39,119,.12), rgba(109,40,217,.12)); color: #db2777; border: 1px solid rgba(219,39,119,.2); }
+.ic-c { background: linear-gradient(135deg, rgba(8,145,178,.12), rgba(37,99,235,.12)); color: #0891b2; border: 1px solid rgba(8,145,178,.2); }
+
+.bento-title {
+  font-family: var(--font-display); font-weight: 700; font-size: 1.05rem;
+  color: var(--text-hi); margin-bottom: .4rem;
+}
+.bento-desc {
+  font-family: var(--font-body); color: var(--text-mid); font-size: .88rem; line-height: 1.6;
+}
+
+/* wide card layout */
+.bento-wide-inner {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; align-items: center;
+}
+.bento-wide-text .bento-title { font-size: 1.4rem; margin-bottom: .7rem; }
+.bento-wide-text .bento-desc { font-size: .94rem; }
+.bento-wide-vis {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .6rem;
+}
+.mini-stat {
+  background: rgba(109,40,217,.05); border: 1px solid rgba(109,40,217,.12);
+  border-radius: 12px; padding: .8rem; text-align: center;
+  transition: background .2s ease;
+}
+.mini-stat:hover { background: rgba(109,40,217,.1); }
+.mini-stat-n { font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; color: var(--text-hi); }
+.mini-stat-l { font-size: .72rem; color: var(--text-lo); letter-spacing: .06em; margin-top: .1rem; }
+
+/* flow row */
+.flow-row {
+  display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
+}
+.flow-step {
+  display: flex; align-items: center; gap: .5rem;
+  background: rgba(109,40,217,.06); border: 1px solid rgba(109,40,217,.15);
+  border-radius: 10px; padding: .5rem .9rem;
+  font-size: .83rem; color: var(--text-hi); font-family: var(--font-body);
+  transition: background .2s ease, border-color .2s ease;
+}
+.flow-step:hover { background: rgba(109,40,217,.12); border-color: rgba(109,40,217,.3); }
+.flow-step i { color: #6d28d9; }
+.flow-arrow { color: var(--text-lo); font-size: .85rem; }
+
+/* ══════════════════════
+   FEATURE PILLS
+══════════════════════ */
+.features-section { padding: 2.5rem 0; }
+.pill-row {
+  display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; margin-bottom: 1.2rem;
+}
+.feature-pill {
+  display: inline-flex; align-items: center; gap: .45rem;
+  background: rgba(255,255,255,.75); border: 1px solid var(--border);
+  color: var(--text-mid); font-size: .85rem; font-family: var(--font-body);
+  padding: .5rem 1rem; border-radius: 100px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 6px rgba(100,80,200,.07);
+  transition: transform .25s var(--ease-spring), border-color .25s ease, color .25s ease, box-shadow .25s ease;
+  cursor: default;
+}
+.feature-pill:hover { transform: translateY(-3px) scale(1.04); color: var(--text-hi); border-color: rgba(109,40,217,.3); box-shadow: 0 8px 20px rgba(80,60,200,.12); }
+.feature-pill i { font-size: .9rem; }
+.pill-v i { color: #6d28d9; }
+.pill-b i { color: #2563eb; }
+.pill-g i { color: #059669; }
+.pill-c i { color: #0891b2; }
+.pill-o i { color: #d97706; }
+
+/* ══════════════════════
+   MODULES
+══════════════════════ */
+.modules-section { padding: 3rem 0; }
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem; margin-top: 1rem;
+}
+.module-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px; padding: 1.5rem;
+  text-decoration: none; color: inherit;
+  position: relative; overflow: hidden;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 2px 16px rgba(100,80,200,.07), 0 1px 4px rgba(0,0,0,.04);
+  transition: transform .3s var(--ease-spring), border-color .3s ease, box-shadow .3s ease;
+  display: block;
+}
+.module-card::after {
+  content: ''; position: absolute;
+  inset: 0; border-radius: 20px;
+  background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(109,40,217,.08), transparent 60%);
+  opacity: 0; transition: opacity .3s ease;
+  pointer-events: none;
+}
+.module-card:hover { transform: translateY(-6px); border-color: var(--border-hover); box-shadow: 0 20px 48px rgba(80,60,200,.14), 0 4px 16px rgba(0,0,0,.06); }
+.module-card:hover::after { opacity: 1; }
+
+.mc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; }
+.mc-icon {
+  width: 46px; height: 46px; border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.mc-arrow {
+  color: var(--text-lo); font-size: 1.1rem;
+  transition: transform .25s var(--ease-spring), color .2s ease;
+}
+.module-card:hover .mc-arrow { transform: translate(3px,-3px); color: #6d28d9; }
+
+.mc-title {
+  font-family: var(--font-display); font-weight: 700; font-size: 1.05rem;
+  color: var(--text-hi); margin-bottom: .35rem;
+}
+.mc-desc { font-family: var(--font-body); color: var(--text-mid); font-size: .87rem; line-height: 1.55; margin-bottom: .9rem; }
+.mc-tag {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-size: .72rem; letter-spacing: .05em; text-transform: uppercase;
+  padding: .25rem .7rem; border-radius: 100px;
+}
+
+/* ══════════════════════
+   HOW IT WORKS
+══════════════════════ */
+.how-section { padding: 3.5rem 0; }
+.steps-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+  gap: .8rem; margin-top: 2rem; position: relative;
+}
+.steps-grid::before {
+  content: ''; position: absolute; top: 28px; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(109,40,217,.25), rgba(37,99,235,.25), transparent);
+  pointer-events: none;
+}
+.step-card {
+  text-align: center; padding: 1.6rem 1.2rem;
+  background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 12px rgba(100,80,200,.07);
+  position: relative;
+  transition: transform .3s var(--ease-spring), box-shadow .3s ease, border-color .3s ease;
+}
+.step-card:hover { transform: translateY(-5px); border-color: var(--border-hover); box-shadow: 0 16px 36px rgba(80,60,200,.13); }
+.step-num {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #6d28d9, #4f46e5);
+  box-shadow: 0 4px 14px rgba(109,40,217,.3);
+  color: #fff; font-family: var(--font-display); font-weight: 800; font-size: .85rem;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto .9rem;
+}
+.step-title {
+  font-family: var(--font-display); font-weight: 700; color: var(--text-hi);
+  font-size: .95rem; margin-bottom: .35rem;
+}
+.step-desc { font-family: var(--font-body); font-size: .83rem; color: var(--text-mid); line-height: 1.55; }
+
+/* ══════════════════════
+   CTA STRIP
+══════════════════════ */
+.cta-section { padding: 4rem 0; }
+.cta-strip {
+  background: linear-gradient(135deg, rgba(109,40,217,.07), rgba(37,99,235,.06));
+  border: 1px solid rgba(109,40,217,.2);
+  border-radius: 24px; padding: 3rem 2rem;
+  text-align: center; position: relative; overflow: hidden;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 24px rgba(100,80,200,.08);
+}
+.cta-strip::before {
+  content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+  width: 400px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(109,40,217,.1), transparent 70%);
+  pointer-events: none;
+}
+.cta-strip h2 {
+  font-family: var(--font-display); font-weight: 800; font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+  color: var(--text-hi); letter-spacing: -.02em; margin-bottom: .7rem;
+}
+.cta-strip p { color: var(--text-mid); margin-bottom: 2rem; font-size: .97rem; }
+
+/* ══════════════════════
+   FOOTER
+══════════════════════ */
+.gp-footer {
+  background: rgba(240, 238, 255, 0.95);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  margin-top: 1rem;
+}
+.footer-inner {
+  max-width: 1180px; margin: 0 auto; padding: 3rem 1.5rem 1.5rem;
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1.4fr; gap: 3rem;
+}
+.footer-brand { }
+.footer-logo {
+  display: flex; align-items: center; gap: .7rem; margin-bottom: 1rem;
+}
+.footer-logo-icon {
+  width: 40px; height: 40px; border-radius: 11px;
+  background: linear-gradient(135deg, #6d28d9, #2563eb);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; color: #fff; flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(109,40,217,.3);
+}
+.footer-logo-text {
+  font-family: var(--font-display); font-weight: 800; font-size: 1.1rem;
+  color: var(--text-hi); line-height: 1;
+}
+.footer-logo-sub { font-size: .68rem; letter-spacing: .08em; color: var(--text-lo); margin-top: .15rem; text-transform: uppercase; }
+.footer-tagline { font-family: var(--font-body); font-size: .88rem; color: var(--text-lo); line-height: 1.65; max-width: 260px; margin-bottom: 1.4rem; }
+
+/* social */
+.footer-social { display: flex; gap: .55rem; }
+.social-btn {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: rgba(109,40,217,.07); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-lo); font-size: .85rem; text-decoration: none;
+  transition: background .2s ease, color .2s ease, border-color .2s ease, transform .2s var(--ease-spring);
+}
+.social-btn:hover { background: rgba(109,40,217,.15); color: #6d28d9; border-color: rgba(109,40,217,.3); transform: translateY(-2px); }
+
+/* footer nav */
+.footer-col-title {
+  font-family: var(--font-display); font-weight: 700; font-size: .88rem;
+  color: var(--text-hi); margin-bottom: 1rem; letter-spacing: .03em;
+}
+.footer-links { list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+.footer-links a {
+  text-decoration: none; color: var(--text-lo); font-size: .85rem;
+  font-family: var(--font-body);
+  transition: color .2s ease, padding-left .2s ease;
+  display: inline-block;
+}
+.footer-links a:hover { color: #6d28d9; padding-left: 4px; }
+
+/* contact items */
+.footer-contact { display: flex; flex-direction: column; gap: .75rem; }
+.contact-item {
+  display: flex; align-items: flex-start; gap: .7rem;
+  font-size: .85rem; font-family: var(--font-body);
+}
+.contact-icon {
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  background: rgba(109,40,217,.08); border: 1px solid rgba(109,40,217,.18);
+  display: flex; align-items: center; justify-content: center;
+  color: #6d28d9; font-size: .8rem; margin-top: .05rem;
+}
+.contact-label { font-size: .72rem; color: var(--text-lo); letter-spacing: .05em; margin-bottom: .15rem; text-transform: uppercase; }
+.contact-value { color: var(--text-mid); line-height: 1.4; }
+.contact-value a { color: var(--text-mid); text-decoration: none; transition: color .2s ease; }
+.contact-value a:hover { color: #6d28d9; }
+
+/* footer bottom */
+.footer-bottom {
+  max-width: 1180px; margin: 0 auto;
+  padding: 1.1rem 1.5rem;
+  border-top: 1px solid rgba(109,40,217,.1);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .6rem;
+}
+.footer-copy { font-size: .78rem; color: var(--text-lo); font-family: var(--font-body); }
+.footer-legal { display: flex; gap: 1.2rem; }
+.footer-legal a { font-size: .78rem; color: var(--text-lo); text-decoration: none; transition: color .2s ease; }
+.footer-legal a:hover { color: var(--text-mid); }
+
+/* ══════════════════════
+   ANIMATIONS & KEYFRAMES
+══════════════════════ */
+@keyframes heroSlide { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+@keyframes badgePop { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+/* scroll-reveal base */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s var(--ease-out), transform .7s var(--ease-out); }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: .1s; }
+.reveal-d2 { transition-delay: .2s; }
+.reveal-d3 { transition-delay: .3s; }
+.reveal-d4 { transition-delay: .4s; }
+.reveal-d5 { transition-delay: .5s; }
+
+/* responsive */
+@media (max-width: 900px) {
+  .about-bento { grid-template-columns: 1fr 1fr; }
+  .bento-span2, .bento-span3 { grid-column: span 2; }
+  .footer-inner { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .steps-grid::before { display: none; }
+}
+@media (max-width: 600px) {
+  .about-bento { grid-template-columns: 1fr; }
+  .bento-span2, .bento-span3 { grid-column: span 1; }
+  .bento-wide-inner { grid-template-columns: 1fr; }
+  .footer-inner { grid-template-columns: 1fr; gap: 1.8rem; }
+  .hero-stats { gap: 1.5rem; }
+}
+</style>
+
+<!-- Animated BG Canvas -->
+<canvas id="bg-canvas"></canvas>
+<div class="grid-overlay"></div>
+
+<div class="gp-wrap">
+
+  <!-- ══ HERO ══ -->
+  <section class="hero">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Smart Visitor Management · v2.0
+    </div>
+    <h1>
+      <span class="word-gate">Gate</span><span class="word-pass">Pass</span>&nbsp;<span class="word-qr">QR</span>
+    </h1>
+    <p class="hero-sub">A next-generation QR-powered access control platform that digitizes your entire visitor lifecycle — from registration and approval to real-time gate scanning and detailed audit logs.</p>
+    <div class="hero-stats">
+      <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Paperless</div></div>
+      <div class="stat-item"><div class="stat-num">&lt;2s</div><div class="stat-label">Scan Speed</div></div>
+      <div class="stat-item"><div class="stat-num">24/7</div><div class="stat-label">Monitoring</div></div>
+      <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label">Scalable</div></div>
+    </div>
+    <div class="hero-actions">
+      <a class="btn-primary" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Get Started</a>
+      <a class="btn-ghost" href="{% url 'scan_qr' %}"><i class="bi bi-qr-code-scan"></i> Scan QR</a>
+    </div>
+    <div class="scroll-hint">
+      SCROLL
+      <div class="scroll-arrow"><div class="scroll-dot"></div></div>
+    </div>
+  </section>
+
+  <!-- ══ FEATURE PILLS ══ -->
+  <section class="features-section">
+    <div class="pill-row">
+      <span class="feature-pill pill-v"><i class="bi bi-lightning-charge-fill"></i> Instant QR Entry</span>
+      <span class="feature-pill pill-b"><i class="bi bi-shield-fill-check"></i> Secure Access Control</span>
+      <span class="feature-pill pill-g"><i class="bi bi-bar-chart-line-fill"></i> Real-time Monitoring</span>
+      <span class="feature-pill pill-c"><i class="bi bi-phone-fill"></i> Mobile Friendly</span>
+      <span class="feature-pill pill-o"><i class="bi bi-bell-fill"></i> Instant Notifications</span>
+      <span class="feature-pill pill-v"><i class="bi bi-file-earmark-text-fill"></i> Audit Logs</span>
+      <span class="feature-pill pill-b"><i class="bi bi-cloud-fill"></i> Cloud-ready</span>
+      <span class="feature-pill pill-g"><i class="bi bi-clock-fill"></i> 24/7 Access</span>
+    </div>
+  </section>
+
+  <!-- ══ ABOUT ══ -->
+  <section class="about-section">
+    <p class="section-eyebrow reveal">About the System</p>
+    <h2 class="section-title reveal reveal-d1">Built for modern security<br>and seamless access</h2>
+    <p class="section-sub reveal reveal-d2">GatePass QR replaces paper logbooks and manual checks with a fully automated, intelligent visitor management platform designed for campuses, offices, and secure facilities.</p>
+
+    <div class="about-bento">
+      <!-- wide card -->
+      <div class="bento-card bento-span2 reveal reveal-d1">
+        <div class="bento-wide-inner">
+          <div class="bento-wide-text">
+            <div class="bento-icon ic-v"><i class="bi bi-qr-code"></i></div>
+            <div class="bento-title">What is GatePass QR?</div>
+            <div class="bento-desc">GatePass QR is a web-based visitor management system that replaces outdated paper registers with a smart, QR-driven digital workflow. When a visitor is registered, the system generates a unique QR code that holds all visit details — purpose, host, time window, and authorization status. Guards simply scan this QR at the gate to instantly verify access, log entry/exit times, and flag anomalies in real time.</div>
+          </div>
+          <div class="bento-wide-vis">
+            <div class="mini-stat"><div class="mini-stat-n">QR</div><div class="mini-stat-l">Unique Pass</div></div>
+            <div class="mini-stat"><div class="mini-stat-n" style="font-size:1rem;">✓ Auto</div><div class="mini-stat-l">Approval Flow</div></div>
+            <div class="mini-stat"><div class="mini-stat-n" style="font-size:1rem;">Live</div><div class="mini-stat-l">Dashboard</div></div>
+            <div class="mini-stat"><div class="mini-stat-n" style="font-size:1rem;">📋 Log</div><div class="mini-stat-l">Full Audit</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- card 2 -->
+      <div class="bento-card reveal reveal-d2">
+        <div class="bento-icon ic-b"><i class="bi bi-diagram-3-fill"></i></div>
+        <div class="bento-title">Multi-role Workflow</div>
+        <div class="bento-desc">Designed for three distinct roles — receptionist, approver, and security guard — each with tailored views and actions to keep operations smooth and accountable.</div>
+      </div>
+
+      <!-- card 3 - flow card -->
+      <div class="bento-card bento-span2 reveal reveal-d1">
+        <div class="bento-icon ic-g"><i class="bi bi-arrow-repeat"></i></div>
+        <div class="bento-title">End-to-End Visitor Flow</div>
+        <div class="bento-desc" style="margin-bottom:.9rem">Every visitor journey from registration to exit, fully tracked.</div>
+        <div class="flow-row">
+          <div class="flow-step"><i class="bi bi-person-plus-fill"></i> Register</div>
+          <span class="flow-arrow">›</span>
+          <div class="flow-step"><i class="bi bi-clipboard-check-fill"></i> Approve</div>
+          <span class="flow-arrow">›</span>
+          <div class="flow-step"><i class="bi bi-qr-code-scan"></i> Scan-In</div>
+          <span class="flow-arrow">›</span>
+          <div class="flow-step"><i class="bi bi-door-open-fill"></i> Enter</div>
+          <span class="flow-arrow">›</span>
+          <div class="flow-step"><i class="bi bi-box-arrow-right"></i> Scan-Out</div>
+        </div>
+      </div>
+
+      <!-- card 4 -->
+      <div class="bento-card reveal reveal-d2">
+        <div class="bento-icon ic-o"><i class="bi bi-shield-lock-fill"></i></div>
+        <div class="bento-title">Why Digital Access Control?</div>
+        <div class="bento-desc">Physical logbooks are slow, error-prone, and offer zero searchability. GatePass QR delivers instant lookups, tamper-proof records, and real-time alerts — ensuring your premises are always protected.</div>
+      </div>
+
+      <!-- span3 wide summary -->
+      <div class="bento-card bento-span3 reveal">
+        <div class="bento-icon ic-p"><i class="bi bi-stars"></i></div>
+        <div class="bento-title">Key Differentiators</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.8rem;margin-top:.6rem">
+          <div>
+            <div style="color:#6d28d9;font-family:var(--font-display);font-weight:700;font-size:.88rem;margin-bottom:.25rem"><i class="bi bi-check-circle-fill me-1"></i>Zero Paper</div>
+            <div style="font-size:.82rem;color:var(--text-mid);line-height:1.5">Fully digital from request to exit. No printing, no physical registers.</div>
+          </div>
+          <div>
+            <div style="color:#2563eb;font-family:var(--font-display);font-weight:700;font-size:.88rem;margin-bottom:.25rem"><i class="bi bi-check-circle-fill me-1"></i>Real-time Visibility</div>
+            <div style="font-size:.82rem;color:var(--text-mid);line-height:1.5">Live dashboard shows who is currently on-premises at any given moment.</div>
+          </div>
+          <div>
+            <div style="color:#059669;font-family:var(--font-display);font-weight:700;font-size:.88rem;margin-bottom:.25rem"><i class="bi bi-check-circle-fill me-1"></i>Instant Verification</div>
+            <div style="font-size:.82rem;color:var(--text-mid);line-height:1.5">QR scan validates passes in under 2 seconds — no typing, no delays.</div>
+          </div>
+          <div>
+            <div style="color:#d97706;font-family:var(--font-display);font-weight:700;font-size:.88rem;margin-bottom:.25rem"><i class="bi bi-check-circle-fill me-1"></i>Complete Audit Trail</div>
+            <div style="font-size:.82rem;color:var(--text-mid);line-height:1.5">Every action is timestamped and logged for compliance and review.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ HOW IT WORKS ══ -->
+  <section class="how-section">
+    <p class="section-eyebrow reveal">Simple Process</p>
+    <h2 class="section-title reveal reveal-d1">How it works</h2>
+    <p class="section-sub reveal reveal-d2">From visitor arrival to verified exit in just a few steps.</p>
+    <div class="steps-grid">
+      <div class="step-card reveal reveal-d1">
+        <div class="step-num">1</div>
+        <div class="step-title">Register Visitor</div>
+        <div class="step-desc">Receptionist fills in visitor details, purpose of visit, host name, and time window.</div>
+      </div>
+      <div class="step-card reveal reveal-d2">
+        <div class="step-num">2</div>
+        <div class="step-title">Approval Review</div>
+        <div class="step-desc">The designated approver receives the request and approves, holds, or rejects it.</div>
+      </div>
+      <div class="step-card reveal reveal-d3">
+        <div class="step-num">3</div>
+        <div class="step-title">QR Generated</div>
+        <div class="step-desc">On approval, a unique QR pass is issued and shared with the visitor instantly.</div>
+      </div>
+      <div class="step-card reveal reveal-d4">
+        <div class="step-num">4</div>
+        <div class="step-title">Gate Scan</div>
+        <div class="step-desc">Security guard scans the QR at entry — the system verifies validity and logs the time.</div>
+      </div>
+      <div class="step-card reveal reveal-d5">
+        <div class="step-num">5</div>
+        <div class="step-title">Exit Logged</div>
+        <div class="step-desc">On departure, a second scan records exit time, completing the visitor's full record.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ MODULES ══ -->
+  <section class="modules-section">
+    <p class="section-eyebrow reveal">All Modules</p>
+    <h2 class="section-title reveal reveal-d1">Everything in one place</h2>
+    <p class="section-sub reveal reveal-d2">Jump directly into any part of the system from here.</p>
+    <div class="module-grid">
+      <a class="module-card reveal reveal-d1" href="{% url 'dashboard' %}">
+        <div class="mc-top">
+          <div class="mc-icon ic-v"><i class="bi bi-speedometer2"></i></div>
+          <span class="mc-arrow"><i class="bi bi-arrow-up-right"></i></span>
+        </div>
+        <div class="mc-title">Dashboard</div>
+        <div class="mc-desc">Live stats, currently on-premises visitors, recent activity, and quick-action shortcuts — your command center.</div>
+        <div class="mc-tag" style="background:rgba(109,40,217,.08);color:#6d28d9;border:1px solid rgba(109,40,217,.18)"><i class="bi bi-circle-fill" style="font-size:.5rem"></i> Live</div>
+      </a>
+      <a class="module-card reveal reveal-d2" href="{% url 'register_visitor' %}">
+        <div class="mc-top">
+          <div class="mc-icon ic-b"><i class="bi bi-person-plus-fill"></i></div>
+          <span class="mc-arrow"><i class="bi bi-arrow-up-right"></i></span>
+        </div>
+        <div class="mc-title">Register Visitor</div>
+        <div class="mc-desc">Create a new pass request with visitor info, host details, purpose, and preferred time window.</div>
+        <div class="mc-tag" style="background:rgba(37,99,235,.08);color:#2563eb;border:1px solid rgba(37,99,235,.18)"><i class="bi bi-circle-fill" style="font-size:.5rem"></i> Entry Point</div>
+      </a>
+      <a class="module-card reveal reveal-d3" href="{% url 'approval_queue' %}">
+        <div class="mc-top">
+          <div class="mc-icon ic-g"><i class="bi bi-clipboard-check-fill"></i></div>
+          <span class="mc-arrow"><i class="bi bi-arrow-up-right"></i></span>
+        </div>
+        <div class="mc-title">Approval Queue</div>
+        <div class="mc-desc">Review all pending visitor requests. Approve, put on hold, or reject with a single click.</div>
+        <div class="mc-tag" style="background:rgba(5,150,105,.08);color:#059669;border:1px solid rgba(5,150,105,.18)"><i class="bi bi-circle-fill" style="font-size:.5rem"></i> Action Required</div>
+      </a>
+      <a class="module-card reveal reveal-d4" href="{% url 'scan_qr' %}">
+        <div class="mc-top">
+          <div class="mc-icon ic-o"><i class="bi bi-qr-code-scan"></i></div>
+          <span class="mc-arrow"><i class="bi bi-arrow-up-right"></i></span>
+        </div>
+        <div class="mc-title">Scan QR</div>
+        <div class="mc-desc">Validate visitor passes at entry and exit gates. Instant feedback on authorization status.</div>
+        <div class="mc-tag" style="background:rgba(217,119,6,.08);color:#d97706;border:1px solid rgba(217,119,6,.18)"><i class="bi bi-circle-fill" style="font-size:.5rem"></i> Gate Use</div>
+      </a>
+      <a class="module-card reveal reveal-d5" href="{% url 'visitor_logs' %}">
+        <div class="mc-top">
+          <div class="mc-icon ic-p"><i class="bi bi-journal-text"></i></div>
+          <span class="mc-arrow"><i class="bi bi-arrow-up-right"></i></span>
+        </div>
+        <div class="mc-title">Visitor Logs</div>
+        <div class="mc-desc">Browse the complete history of all visits with filters, search, and export capabilities.</div>
+        <div class="mc-tag" style="background:rgba(219,39,119,.08);color:#db2777;border:1px solid rgba(219,39,119,.18)"><i class="bi bi-circle-fill" style="font-size:.5rem"></i> Records</div>
+      </a>
+      <a class="module-card reveal reveal-d2" href="{% url 'approval_queue' %}">
+        <div class="mc-top">
+          <div class="mc-icon ic-c"><i class="bi bi-eye-fill"></i></div>
+          <span class="mc-arrow"><i class="bi bi-arrow-up-right"></i></span>
+        </div>
+        <div class="mc-title">Review Center</div>
+        <div class="mc-desc">Deep-dive into any pass request, review all submitted details, and take decisive action.</div>
+        <div class="mc-tag" style="background:rgba(8,145,178,.08);color:#0891b2;border:1px solid rgba(8,145,178,.18)"><i class="bi bi-circle-fill" style="font-size:.5rem"></i> Management</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ══ CTA ══ -->
+  <section class="cta-section reveal">
+    <div class="cta-strip">
+      <h2>Ready to secure your premises?</h2>
+      <p>Start managing visitors smarter, faster, and without paper.</p>
+      <div class="hero-actions">
+        <a class="btn-primary" href="{% url 'register_visitor' %}"><i class="bi bi-person-plus"></i> Register a Visitor</a>
+        <a class="btn-ghost" href="{% url 'dashboard' %}"><i class="bi bi-grid-1x2-fill"></i> Open Dashboard</a>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /gp-wrap -->
+
+<!-- ══ FOOTER ══ -->
+<footer class="gp-footer">
+  <div class="footer-inner">
+    <!-- Brand -->
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <div class="footer-logo-icon"><i class="bi bi-qr-code"></i></div>
+        <div>
+          <div class="footer-logo-text">GatePass QR</div>
+          <div class="footer-logo-sub">Visitor Management System</div>
+        </div>
+      </div>
+      <p class="footer-tagline">A smart QR-based platform for secure, paperless, and efficient visitor access control at any scale.</p>
+      <div class="footer-social">
+        <a class="social-btn" href="#" title="GitHub"><i class="bi bi-github"></i></a>
+        <a class="social-btn" href="https://www.linkedin.com/in/solanki-jayveer-sinh-65797732b" title="LinkedIn" target="_blank" rel="noopener noreferrer"><i class="bi bi-linkedin"></i></a>
+        <a class="social-btn" href="#" title="Twitter"><i class="bi bi-twitter-x"></i></a>
+      </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div>
+      <div class="footer-col-title">Quick Links</div>
+      <ul class="footer-links">
+        <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+        <li><a href="{% url 'register_visitor' %}">Register Visitor</a></li>
+        <li><a href="{% url 'approval_queue' %}">Approvals</a></li>
+        <li><a href="{% url 'scan_qr' %}">Scan QR</a></li>
+        <li><a href="{% url 'visitor_logs' %}">Visitor Logs</a></li>
+      </ul>
+    </div>
+
+    <!-- Features -->
+    <div>
+      <div class="footer-col-title">Features</div>
+      <ul class="footer-links">
+        <li><a href="#">QR Entry System</a></li>
+        <li><a href="#">Approval Workflow</a></li>
+        <li><a href="#">Real-time Monitoring</a></li>
+        <li><a href="#">Secure Access Control</a></li>
+        <li><a href="#">Audit & Logs</a></li>
+      </ul>
+    </div>
+
+    <!-- Contact -->
+    <div>
+      <div class="footer-col-title">Contact</div>
+      <div class="footer-contact">
+        <div class="contact-item">
+          <div class="contact-icon"><i class="bi bi-envelope-fill"></i></div>
+          <div>
+            <div class="contact-label">Developer 1</div>
+            <div class="contact-value"><a href="mailto:jayveersinsolanki814@gmail.com">jayveersinsolanki814@gmail.com</a></div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon"><i class="bi bi-envelope-fill"></i></div>
+          <div>
+            <div class="contact-label">Developer 2</div>
+            <div class="contact-value"><a href="mailto:divanpatel48@gmail.com">divanpatel48@gmail.com</a></div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon"><i class="bi bi-geo-alt-fill"></i></div>
+          <div>
+            <div class="contact-label">Location</div>
+            <div class="contact-value">Gujarat, India</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 GatePass QR System. All rights reserved. Built with ♥ in Gujarat.</div>
+    <div class="footer-legal">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Use</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── PARTICLE CANVAS ── */
+(function(){
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [], lines = [];
+
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const COLORS = ['rgba(109,40,217,', 'rgba(79,70,229,', 'rgba(37,99,235,', 'rgba(8,145,178,'];
+  class Particle {
+    constructor(){
+      this.x = Math.random()*W; this.y = Math.random()*H;
+      this.vx = (Math.random()-.5)*.35; this.vy = (Math.random()-.5)*.35;
+      this.r = Math.random()*1.5+.5;
+      this.c = COLORS[Math.floor(Math.random()*COLORS.length)];
+      this.a = Math.random()*.18+.06;
+    }
+    update(){ this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>W) this.vx*=-1; if(this.y<0||this.y>H) this.vy*=-1; }
+    draw(){ ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle=this.c+this.a+')'; ctx.fill(); }
+  }
+
+  for(let i=0;i<90;i++) particles.push(new Particle());
+
+  function drawLines(){
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<120){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y);
+          ctx.strokeStyle=`rgba(109,80,220,${(.08*(1-d/120))})`;
+          ctx.lineWidth=.7; ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animate(){
+    ctx.clearRect(0,0,W,H);
+    // Deep glow spots
+    const g1=ctx.createRadialGradient(W*.2,H*.2,0,W*.2,H*.2,W*.35);
+    g1.addColorStop(0,'rgba(109,40,217,.04)'); g1.addColorStop(1,'transparent');
+    ctx.fillStyle=g1; ctx.fillRect(0,0,W,H);
+    const g2=ctx.createRadialGradient(W*.8,H*.7,0,W*.8,H*.7,W*.3);
+    g2.addColorStop(0,'rgba(37,99,235,.03)'); g2.addColorStop(1,'transparent');
+    ctx.fillStyle=g2; ctx.fillRect(0,0,W,H);
+
+    particles.forEach(p=>{ p.update(); p.draw(); });
+    drawLines();
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+/* ── MOUSE GLOW ON MODULE CARDS ── */
+document.querySelectorAll('.module-card').forEach(card=>{
+  card.addEventListener('mousemove', e=>{
+    const r = card.getBoundingClientRect();
+    const x = ((e.clientX-r.left)/r.width*100).toFixed(1)+'%';
+    const y = ((e.clientY-r.top)/r.height*100).toFixed(1)+'%';
+    card.style.setProperty('--mx',x); card.style.setProperty('--my',y);
+  });
+});
+
+/* ── SCROLL REVEAL ── */
+const observer = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); observer.unobserve(e.target); } });
+},{ threshold:.1 });
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+</script>
+
+{% endblock %}

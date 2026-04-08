@@ -1,9 +1,592 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>Visitor Registration</h3>
-<form method="post" enctype="multipart/form-data" class="card card-body">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="btn btn-primary">Submit</button>
-</form>
+  <style>
+  :root {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border-color: #e2e8f0;
+    --border-focus: #6366f1;
+    --accent-primary: #6366f1;
+    --accent-secondary: #8b5cf6;
+    --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --success-bg: #dcfce7;
+    --success-text: #166534;
+    --error-bg: #fee2e2;
+    --error-text: #991b1b;
+  }
+
+  html[data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --border-color: #334155;
+    --border-focus: #818cf8;
+    --accent-primary: #818cf8;
+    --accent-secondary: #a78bfa;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+    --success-bg: #166534;
+    --success-text: #dcfce7;
+    --error-bg: #991b1b;
+    --error-text: #fee2e2;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .registration-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    animation: slideDown 0.5s ease-out;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--accent-gradient);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .header-icon svg {
+    width: 28px;
+    height: 28px;
+    color: white;
+  }
+
+  .header-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+  }
+
+  .theme-toggle {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    border: 2px solid var(--border-color);
+    background: var(--bg-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--accent-primary);
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
+  }
+
+  .theme-toggle svg {
+    width: 22px;
+    height: 22px;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    position: absolute;
+  }
+
+  .theme-toggle .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+
+  .theme-toggle .moon-icon {
+    opacity: 0;
+    transform: rotate(-90deg);
+  }
+
+  html[data-theme="dark"] .theme-toggle .sun-icon {
+    opacity: 0;
+    transform: rotate(90deg);
+  }
+
+  html[data-theme="dark"] .theme-toggle .moon-icon {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+
+  .form-card {
+    background: var(--bg-secondary);
+    border-radius: 24px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .form-card:hover {
+    box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.15);
+  }
+
+  .form-header {
+    background: var(--accent-gradient);
+    padding: 1.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+  }
+
+  .form-header-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .form-header-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .form-header-icon svg {
+    width: 22px;
+    height: 22px;
+    color: white;
+  }
+
+  .form-header-text h4 {
+    color: white;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .form-header-text p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.8rem;
+    margin-top: 0.125rem;
+  }
+
+  .form-body {
+    padding: 2rem;
+  }
+
+  /* Style Django form fields */
+  .form-body p {
+    margin-bottom: 1.5rem;
+    animation: fadeInUp 0.4s ease-out backwards;
+  }
+
+  .form-body p:nth-child(1) { animation-delay: 0.1s; }
+  .form-body p:nth-child(2) { animation-delay: 0.15s; }
+  .form-body p:nth-child(3) { animation-delay: 0.2s; }
+  .form-body p:nth-child(4) { animation-delay: 0.25s; }
+  .form-body p:nth-child(5) { animation-delay: 0.3s; }
+  .form-body p:nth-child(6) { animation-delay: 0.35s; }
+  .form-body p:nth-child(7) { animation-delay: 0.4s; }
+  .form-body p:nth-child(8) { animation-delay: 0.45s; }
+
+  .form-body label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+  }
+
+  .form-body input[type="text"],
+  .form-body input[type="email"],
+  .form-body input[type="tel"],
+  .form-body input[type="number"],
+  .form-body input[type="date"],
+  .form-body input[type="time"],
+  .form-body input[type="datetime-local"],
+  .form-body input[type="password"],
+  .form-body input[type="url"],
+  .form-body input[type="file"],
+  .form-body select,
+  .form-body textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    outline: none;
+    transition: all 0.3s ease;
+  }
+
+  .form-body input:focus,
+  .form-body select:focus,
+  .form-body textarea:focus {
+    border-color: var(--border-focus);
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  }
+
+  .form-body input:hover:not(:focus),
+  .form-body select:hover:not(:focus),
+  .form-body textarea:hover:not(:focus) {
+    border-color: var(--text-muted);
+  }
+
+  .form-body input[type="file"] {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+  }
+
+  .form-body input[type="file"]::file-selector-button {
+    padding: 0.5rem 1rem;
+    margin-right: 1rem;
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .form-body input[type="file"]::file-selector-button:hover {
+    transform: scale(1.02);
+  }
+
+  .form-body select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+  }
+
+  .form-body textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .form-body input[type="checkbox"],
+  .form-body input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.5rem;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+  }
+
+  /* Error messages */
+  .form-body .errorlist {
+    list-style: none;
+    padding: 0.75rem 1rem;
+    margin-top: 0.5rem;
+    background: var(--error-bg);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--error-text);
+  }
+
+  .form-body .helptext {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+  }
+
+  .form-footer {
+    padding: 0 2rem 2rem;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: white;
+    background: var(--accent-gradient);
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+  }
+
+  .submit-btn:hover::before {
+    left: 100%;
+  }
+
+  .submit-btn:active {
+    transform: translateY(0);
+  }
+
+  .submit-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Info card */
+  .info-card {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    background: var(--bg-tertiary);
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    animation: fadeInUp 0.6s ease-out 0.3s backwards;
+  }
+
+  .info-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .info-card-header svg {
+    width: 18px;
+    height: 18px;
+    color: var(--accent-primary);
+  }
+
+  .info-card-header span {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+  }
+
+  .info-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .info-card li {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 0.375rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .info-card li::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 0.375rem;
+  }
+
+  @media (max-width: 640px) {
+    .registration-container {
+      padding: 1rem;
+    }
+
+    .header {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .header-left {
+      flex-direction: column;
+    }
+
+    .form-body {
+      padding: 1.5rem;
+    }
+
+    .form-footer {
+      padding: 0 1.5rem 1.5rem;
+    }
+  }
+  </style>
+  <div class="registration-container">
+    <div class="header">
+      <div class="header-left">
+        <div class="header-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="header-title">Visitor Registration</h3>
+          <p class="header-subtitle">Please fill in the visitor details below</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-header">
+        <div class="form-header-content">
+          <div class="form-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div class="form-header-text">
+            <h4>Registration Form</h4>
+            <p>All fields marked with * are required</p>
+          </div>
+        </div>
+      </div>
+
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-body">
+          {{ form.as_p }}
+        </div>
+        <div class="form-footer">
+          <button type="submit" class="submit-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Submit Registration
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-header">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Important Information</span>
+      </div>
+      <ul>
+        <li>Please ensure all details are accurate before submission</li>
+        <li>Photo ID may be required at check-in</li>
+        <li>Registration is valid for the specified date only</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Add focus animations to form fields
+    document.querySelectorAll('.form-body input, .form-body select, .form-body textarea').forEach(field => {
+      field.addEventListener('focus', function() {
+        this.closest('p')?.classList.add('focused');
+      });
+      field.addEventListener('blur', function() {
+        this.closest('p')?.classList.remove('focused');
+      });
+    });
+  </script>
 {% endblock %}

@@ -3,6 +3,21 @@ from django.contrib.auth.models import User
 from .models import Gate, VisitorPass
 
 
+def apply_bootstrap_widget_classes(form: forms.BaseForm) -> None:
+    """
+    Ensures widgets rendered via `form.as_p` get Bootstrap classes.
+    This keeps templates clean and makes the UI consistent.
+    """
+    for field in form.fields.values():
+        widget = field.widget
+        if isinstance(widget, forms.CheckboxInput):
+            widget.attrs.setdefault("class", "form-check-input")
+        elif isinstance(widget, forms.Select):
+            widget.attrs.setdefault("class", "form-select")
+        else:
+            widget.attrs.setdefault("class", "form-control")
+
+
 class VisitorPassForm(forms.ModelForm):
     class Meta:
         model = VisitorPass
@@ -28,14 +43,23 @@ class VisitorPassForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["host"].queryset = User.objects.filter(is_active=True).order_by("first_name", "username")
+        apply_bootstrap_widget_classes(self)
 
 
 class ApprovalForm(forms.Form):
     decision = forms.ChoiceField(choices=[("approved", "Approve"), ("rejected", "Reject")])
     note = forms.CharField(max_length=255, required=False)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_bootstrap_widget_classes(self)
+
 
 class ScanForm(forms.Form):
     qr_token = forms.CharField(widget=forms.Textarea(attrs={"rows": 2}), help_text="Paste scanned QR token")
     gate = forms.ModelChoiceField(queryset=Gate.objects.filter(is_active=True))
     action = forms.ChoiceField(choices=[("entry", "Entry"), ("exit", "Exit")])
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_bootstrap_widget_classes(self)
