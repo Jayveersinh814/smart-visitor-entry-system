@@ -8,10 +8,6 @@ logger = logging.getLogger(__name__)
 
 
 def send_visitor_pass_email(visitor_pass):
-    """
-    Send approved visitor pass (QR + invite) to visitor's email.
-    Returns (True, None) on success, (False, reason) on skip/failure.
-    """
     email_addr = (visitor_pass.email or "").strip()
     if not email_addr:
         return False, "no_email"
@@ -21,7 +17,6 @@ def send_visitor_pass_email(visitor_pass):
         subject = f"Your visitor pass – GatePass QR (Pass #{visitor_pass.id})"
         qr_image_url = None
         if visitor_pass.qr_image:
-            # qr_image.url is typically "/media/qr_codes/....png"
             qr_image_url = f"{settings.SITE_URL}{visitor_pass.qr_image.url}"
         context = {
             "pass": visitor_pass,

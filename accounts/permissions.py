@@ -5,7 +5,6 @@ from .models import UserProfile
 
 
 def is_org_admin(user):
-    """Superuser or profile role admin sees all visitors / full queue."""
     if not user.is_authenticated:
         return False
     if user.is_superuser:

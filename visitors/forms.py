@@ -4,10 +4,6 @@ from .models import Gate, VisitorPass
 
 
 def apply_bootstrap_widget_classes(form: forms.BaseForm) -> None:
-    """
-    Ensures widgets rendered via `form.as_p` get Bootstrap classes.
-    This keeps templates clean and makes the UI consistent.
-    """
     for field in form.fields.values():
         widget = field.widget
         if isinstance(widget, forms.CheckboxInput):
