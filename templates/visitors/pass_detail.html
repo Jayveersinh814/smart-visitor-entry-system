@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-  /* CSS Variables for theming */
+  
   :root {
     --bg-primary: #f8fafc;
     --bg-secondary: #ffffff;
@@ -35,7 +35,7 @@
     --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   }
 
-  /* Animations */
+  
   @keyframes fadeInUp {
     from {
       opacity: 0;
@@ -85,7 +85,7 @@
     }
   }
 
-  /* Base styles */
+  
   .pass-detail-container {
     min-height: 100vh;
     background: var(--bg-primary);
@@ -99,7 +99,7 @@
     margin: 0 auto;
   }
 
-  /* Header */
+  
   .page-header {
     display: flex;
     align-items: center;
@@ -147,7 +147,7 @@
     font-weight: 600;
   }
 
-  /* Theme toggle */
+  
   .theme-toggle {
     width: 44px;
     height: 44px;
@@ -172,7 +172,7 @@
     color: var(--text-secondary);
   }
 
-  /* Main Card */
+  
   .pass-card {
     background: var(--bg-secondary);
     border-radius: 20px;
@@ -251,7 +251,7 @@
     height: 14px;
   }
 
-  /* Card Body */
+  
   .card-body-custom {
     padding: 1.5rem;
   }
@@ -325,7 +325,7 @@
     color: var(--text-primary);
   }
 
-  /* Status badge */
+  
   .status-badge {
     display: inline-flex;
     align-items: center;
@@ -372,7 +372,7 @@
     animation: pulse 2s infinite;
   }
 
-  /* QR Section */
+  
   .qr-section {
     margin-top: 1.5rem;
     padding: 1.5rem;
@@ -442,7 +442,7 @@
     height: 18px;
   }
 
-  /* Warning message */
+  
   .qr-warning {
     display: flex;
     align-items: center;
@@ -460,7 +460,7 @@
     flex-shrink: 0;
   }
 
-  /* Review button */
+  
   .review-section {
     animation: fadeInUp 0.8s ease-out 0.3s backwards;
   }
@@ -494,7 +494,7 @@
     height: 20px;
   }
 
-  /* Date/Time styling */
+  
   .time-range {
     display: flex;
     flex-direction: column;
@@ -524,7 +524,7 @@
     font-weight: 600;
   }
 
-  /* Responsive */
+  
   @media (max-width: 640px) {
     .pass-detail-container {
       padding: 1rem;
@@ -560,7 +560,7 @@
 
 <div class="pass-detail-container">
   <div class="pass-detail-wrapper">
-    <!-- Header -->
+    
     <div class="page-header">
       <div class="header-left">
         <div class="header-icon">
@@ -575,9 +575,9 @@
       </div>
     </div>
 
-    <!-- Main Card -->
+    
     <div class="pass-card">
-      <!-- Card Header with Visitor Info -->
+      
       <div class="card-header">
         <div class="card-header-content">
           <div class="visitor-avatar">
@@ -597,10 +597,10 @@
         </div>
       </div>
 
-      <!-- Card Body -->
+      
       <div class="card-body-custom">
         <div class="info-grid">
-          <!-- Host -->
+          
           <div class="info-item">
             <div class="info-icon host">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -613,7 +613,7 @@
             </div>
           </div>
 
-          <!-- Status -->
+          
           <div class="info-item">
             <div class="info-icon status">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -631,7 +631,7 @@
             </div>
           </div>
 
-          <!-- Reference -->
+          
           <div class="info-item">
             <div class="info-icon reference">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -644,7 +644,7 @@
             </div>
           </div>
 
-          <!-- Valid Window -->
+          
           <div class="info-item">
             <div class="info-icon window">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -675,7 +675,7 @@
           </div>
         </div>
 
-        <!-- QR Code Section -->
+        
         {% if pass.qr_image %}
         <div class="qr-section">
           <div class="qr-title">
@@ -709,7 +709,7 @@
       </div>
     </div>
 
-    <!-- Review Button -->
+    
     {% if pass.status == 'pending' %}
     <div class="review-section">
       <a class="review-btn" href="{% url 'review_pass' pass.id %}">

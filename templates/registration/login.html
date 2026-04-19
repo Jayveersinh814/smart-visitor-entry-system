@@ -20,8 +20,8 @@
     --label:     #9295b0;
     --accent:    #5b5ef5;
     --accent2:   #9b5ef5;
-    --input-bg:  #f4f5fb;       /* softer lavender-tinted bg */
-    --input-txt: #3a3d5c;       /* medium-dark, not full black */
+    --input-bg:  #f4f5fb;       
+    --input-txt: #3a3d5c;       
     --glow:      rgba(91,94,245,0.10);
     --shadow:    0 2px 32px rgba(91,94,245,0.08), 0 1px 4px rgba(0,0,0,0.04);
     --radius:    14px;
@@ -40,7 +40,6 @@
     position: relative;
   }
 
-  /* dot grid */
   body::before {
     content: '';
     position: fixed; inset: 0; z-index: 0; pointer-events: none;
@@ -49,7 +48,7 @@
     opacity: 0.55;
   }
 
-  /* ambient orbs */
+  
   body::after {
     content: '';
     position: fixed;
@@ -68,7 +67,7 @@
     z-index: 0; pointer-events: none;
   }
 
-  /* ── wrapper ── */
+  
   .wrap {
     position: relative; z-index: 2;
     width: 100%; max-width: 400px;
@@ -79,7 +78,7 @@
     to   { opacity:1; transform:translateY(0); }
   }
 
-  /* ── brand ── */
+  
   .brand { text-align: center; margin-bottom: 1.75rem; }
 
   .icon-ring {
@@ -99,7 +98,7 @@
     box-shadow: 0 8px 30px rgba(91,94,245,0.20);
   }
 
-  /* QR + scan */
+  
   .qr-wrap {
     position: relative;
     width: 36px; height: 36px;
@@ -150,7 +149,7 @@
   }
   .brand p { font-size: 13.5px; color: var(--muted); }
 
-  /* ── card ── */
+  
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -166,7 +165,7 @@
     background: linear-gradient(90deg, #5b5ef5, #9b5ef5, #ec4899);
     border-radius: 20px 20px 0 0;
   }
-  /* mouse-glow */
+  
   .card::after {
     content: '';
     position: absolute; inset:0; pointer-events:none;
@@ -175,7 +174,7 @@
   }
   .card:hover::after { opacity:1; }
 
-  /* ── field ── */
+  
   .field { margin-bottom: 1.1rem; }
   .lbl {
     display: block;
@@ -188,13 +187,13 @@
   .iw svg.ico {
     position: absolute; left: 12px; top: 50%;
     transform: translateY(-50%);
-    color: #b8bbce;           /* very light icon default */
+    color: #b8bbce;           
     pointer-events: none;
     transition: color 0.2s;
   }
   .iw:focus-within svg.ico { color: var(--accent); }
 
-  /* ── THE INPUT – softer style ── */
+  
   .iw input {
     width: 100%;
     height: 46px;
@@ -202,9 +201,9 @@
     font-size: 13.5px;
     font-family: 'DM Sans', sans-serif;
     font-weight: 400;
-    /* soft slate-tinted background, NOT sharp white */
+    
     background: #f0f1f9;
-    /* medium-soft text color */
+    
     color: #4a4e72;
     border: 1.5px solid #dde1ef;
     border-radius: 10px;
@@ -214,7 +213,7 @@
     -webkit-appearance: none;
   }
   .iw input::placeholder {
-    color: #b0b4cc;   /* very soft placeholder */
+    color: #b0b4cc;   
     font-weight: 400;
   }
   .iw input:hover {
@@ -225,10 +224,10 @@
     border-color: var(--border-fo);
     box-shadow: 0 0 0 3px var(--glow);
     background: #eef0fd;
-    color: #2d3058;   /* slightly deeper when typing */
+    color: #2d3058;   
   }
 
-  /* pw toggle */
+  
   .pw-btn {
     position: absolute; right: 10px; top: 50%;
     transform: translateY(-50%);
@@ -240,7 +239,7 @@
   }
   .pw-btn:hover { color: var(--accent); background: rgba(91,94,245,0.07); }
 
-  /* ── meta ── */
+  
   .meta {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 1.3rem; font-size: 13px;
@@ -259,7 +258,7 @@
   }
   .forgot:hover { color: var(--accent2); }
 
-  /* ── button ── */
+  
   .btn {
     width: 100%; height: 48px; border: none; border-radius: 11px;
     background: linear-gradient(135deg, #5b5ef5 0%, #9b5ef5 100%);
@@ -283,7 +282,7 @@
   .btn:hover::after { left:140%; }
   .btn:active { transform:translateY(0) scale(0.98); opacity:0.88; }
 
-  /* ── footer badges ── */
+  
   .badges {
     display: flex; align-items: center; justify-content: center; gap: 18px;
     margin-top: 1.4rem;
@@ -317,7 +316,6 @@
 <div class="orb2"></div>
 
 <div class="wrap">
-  <!-- brand -->
   <div class="brand">
     <div class="icon-ring">
       <div class="qr-wrap">
@@ -343,7 +341,6 @@
     <p>Sign in to manage your access passes</p>
   </div>
 
-  <!-- card -->
   <div class="card" id="loginCard">
     <form method="post" action="{% url 'login' %}" novalidate>
       {% csrf_token %}
@@ -353,7 +350,6 @@
         </div>
       {% endif %}
 
-    <!-- username -->
     <div class="field">
       <label class="lbl" for="id_username">Username</label>
       <div class="iw">
@@ -366,7 +362,6 @@
       </div>
     </div>
 
-    <!-- password -->
     <div class="field">
       <label class="lbl" for="id_password">Password</label>
       <div class="iw">
@@ -386,7 +381,6 @@
       </div>
     </div>
 
-    <!-- meta -->
     <div class="meta">
       <label class="remember">
         <input type="checkbox" name="remember"/> Remember me
@@ -394,7 +388,6 @@
       <a href="#" class="forgot">Forgot password?</a>
     </div>
 
-    <!-- submit -->
     <button class="btn" type="submit">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -410,7 +403,6 @@
     </form>
   </div>
 
-  <!-- badges -->
   <div class="badges">
     <div class="badge">
       <div class="badge-icon">
@@ -442,9 +434,8 @@
 </div>
 
 <script>
-  /* password toggle */
-  var pw = document.getElementById('id_password');
-  var toggle = document.getElementById('pwToggle');
+  
+  var pw = document.getElementById('id_password');  var toggle = document.getElementById('pwToggle');
   var icon = document.getElementById('eyeIcon');
   var openEye = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
   var closedEye = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
@@ -454,7 +445,7 @@
     icon.innerHTML = show ? closedEye : openEye;
   });
 
-  /* card mouse glow */
+  
   var card = document.getElementById('loginCard');
   card.addEventListener('mousemove', function(e){
     var r = card.getBoundingClientRect();

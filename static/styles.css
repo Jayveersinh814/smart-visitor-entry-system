@@ -1,5 +1,3 @@
-/* Global app theme tweaks (light only). */
-
 .app-bg {
   background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 50%, #e0f2fe 100%);
   min-height: 100vh;
@@ -84,7 +82,6 @@ p, small, li, td, th, label, input, textarea, select {
   border-radius: 14px;
 }
 
-/* Navbar palette */
 .app-navbar .nav-link {
   font-family: "Poppins", sans-serif;
   font-weight: 500;
@@ -100,8 +97,6 @@ p, small, li, td, th, label, input, textarea, select {
   font-weight: 600;
 }
 
-/* Django auth login uses the default form widgets (no Bootstrap classes).
-   This keeps the login inputs visually consistent. */
 #loginForm input,
 #loginForm textarea,
 #loginForm select {
@@ -111,7 +106,6 @@ p, small, li, td, th, label, input, textarea, select {
   border-radius: 0.5rem;
 }
 
-/* Make checkbox spacing a bit nicer with `form.as_p`. */
 input.form-check-input {
   margin-left: 0.5rem;
 }
